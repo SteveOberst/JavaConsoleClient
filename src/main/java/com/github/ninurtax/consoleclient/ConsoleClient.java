@@ -97,7 +97,7 @@ public class ConsoleClient {
             public void packetReceived(PacketReceivedEvent event) {
                 if (event.getPacket() instanceof ServerJoinGamePacket) {
                     System.out.println("Server successfully joined");
-                    if (!ScriptReader.alreadyExecuted)
+                    if (!ScriptCommander.alreadyExecuted)
                         tryStartupScript(client);
                 } else if (event.getPacket() instanceof ServerChatPacket) {
                     Message message = event.<ServerChatPacket>getPacket().getMessage();
@@ -142,39 +142,85 @@ public class ConsoleClient {
         }
 
         try {
-            ScriptReader scriptReader = new ScriptReader("startup.txt", client);
-            scriptReader.execute();
+            ScriptCommander scriptCommander = new ScriptCommander("startup.txt", client);
+            scriptCommander.start();
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    static class ScriptReader extends FileReader {
+    static class ScriptCommander extends Thread {
 
         public static boolean alreadyExecuted = false;
-        Client client;
+        private static final int TIMEOUT_IN_MILLIS = 60000;
+        private Client client;
+        private String fileName;
+        private ScriptReader scriptReader;
 
-        public ScriptReader(@NotNull String fileName, Client client) throws FileNotFoundException {
-            super(fileName);
+
+        public ScriptCommander(@NotNull String fileName, Client client) throws FileNotFoundException {
             this.client = client;
+            this.fileName = fileName;
+            this.scriptReader = new ScriptReader(fileName);
         }
 
-        void execute () {
+        @Override
+        public void run() {
             alreadyExecuted = true;
-            Scanner scanner = new Scanner(this);
-            while (scanner.hasNextLine()) {
-                String[] args = scanner.nextLine().split(" ");
-                new SkriptHandler(args).execute();
+            while (scriptReader.hasNextLine()) {
+                String[] args = scriptReader.getNextLine().split(" ");
+                ScriptHandler scriptHandler = new ScriptHandler(args, this);
+                scriptHandler.start();
+                try {
+                    scriptHandler.join(TIMEOUT_IN_MILLIS);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                    return;
+                }
             }
         }
 
-        private class SkriptHandler {
-            String[] args;
-            public SkriptHandler(String[] args) {
-                this.args = args;
+
+        private class ScriptReader extends FileReader {
+
+            private Scanner scanner;
+
+            public ScriptReader(@NotNull String fileName) throws FileNotFoundException {
+                super(fileName);
+                this.scanner = new Scanner(this);
             }
 
-            void execute() throws ArrayIndexOutOfBoundsException {
+            public String getNextLine() {
+                return scanner.nextLine();
+            }
+
+            public boolean hasNextLine() {
+                return scanner.hasNextLine();
+            }
+
+
+        }
+
+        private class ScriptHandler extends Thread {
+
+            @Override
+            public void run() {
+                try {
+                    this.execute();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            String[] args;
+            ScriptCommander executor;
+
+            public ScriptHandler(String[] args, ScriptCommander executor) {
+                this.args = args;
+                this.executor = executor;
+            }
+
+            void execute() throws ArrayIndexOutOfBoundsException, InterruptedException, NumberFormatException {
                 switch (Commands.valueOf(args[0].toUpperCase())) {
                     case SEND:
                         StringJoiner stringBuilder = new StringJoiner(" ");
@@ -187,9 +233,12 @@ public class ConsoleClient {
                         client.getSession().send(new ClientChatPacket(message));
                         break;
                     case WAIT:
-                        //TODO:
+                        Integer timeout = Integer.parseInt(args[1]);
+                        System.out.println(" >> [Console Cient] Waiting: "+ timeout + "ms");
+                        sleep(timeout);
                         break;
                     default:
+                        System.out.println(" >> [Console Cient] Unkown Command: "+args[0]);
                         return;
                 }
             }
