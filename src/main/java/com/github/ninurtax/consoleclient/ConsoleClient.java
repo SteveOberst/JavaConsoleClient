@@ -1,189 +1,66 @@
 package com.github.ninurtax.consoleclient;
 
-import com.github.steveice10.mc.auth.data.GameProfile;
 import com.github.steveice10.mc.auth.exception.request.RequestException;
 import com.github.steveice10.mc.auth.service.AuthenticationService;
 import com.github.steveice10.mc.auth.service.SessionService;
 import com.github.steveice10.mc.protocol.MinecraftConstants;
 import com.github.steveice10.mc.protocol.MinecraftProtocol;
-import com.github.steveice10.mc.protocol.ServerLoginHandler;
-import com.github.steveice10.mc.protocol.data.SubProtocol;
-import com.github.steveice10.mc.protocol.data.game.entity.player.GameMode;
 import com.github.steveice10.mc.protocol.data.message.Message;
-import com.github.steveice10.mc.protocol.data.message.TextMessage;
-import com.github.steveice10.mc.protocol.data.status.PlayerInfo;
-import com.github.steveice10.mc.protocol.data.status.ServerStatusInfo;
-import com.github.steveice10.mc.protocol.data.status.VersionInfo;
-import com.github.steveice10.mc.protocol.data.status.handler.ServerInfoBuilder;
-import com.github.steveice10.mc.protocol.data.status.handler.ServerInfoHandler;
-import com.github.steveice10.mc.protocol.data.status.handler.ServerPingTimeHandler;
 import com.github.steveice10.mc.protocol.packet.ingame.client.ClientChatPacket;
 import com.github.steveice10.mc.protocol.packet.ingame.server.ServerChatPacket;
 import com.github.steveice10.mc.protocol.packet.ingame.server.ServerJoinGamePacket;
 import com.github.steveice10.opennbt.tag.builtin.*;
 import com.github.steveice10.packetlib.Client;
 import com.github.steveice10.packetlib.ProxyInfo;
-import com.github.steveice10.packetlib.Server;
-import com.github.steveice10.packetlib.Session;
-import com.github.steveice10.packetlib.event.server.ServerAdapter;
-import com.github.steveice10.packetlib.event.server.ServerClosedEvent;
-import com.github.steveice10.packetlib.event.server.SessionAddedEvent;
-import com.github.steveice10.packetlib.event.server.SessionRemovedEvent;
 import com.github.steveice10.packetlib.event.session.DisconnectedEvent;
 import com.github.steveice10.packetlib.event.session.PacketReceivedEvent;
 import com.github.steveice10.packetlib.event.session.SessionAdapter;
 import com.github.steveice10.packetlib.tcp.TcpSessionFactory;
+import com.google.gson.JsonSyntaxException;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.TextComponent;
-import net.kyori.adventure.text.serializer.ComponentSerializer;
 import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
+import net.kyori.adventure.text.serializer.plain.PlainComponentSerializer;
+import org.bukkit.ChatColor;
+import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.net.Proxy;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.Scanner;
+import java.util.*;
 
 public class ConsoleClient {
 
     private static final boolean SPAWN_SERVER = false;
     private static final boolean VERIFY_USERS = true;
-    private static final String HOST = "pitforge.com";
     private static final int PORT = 25565;
     private static final ProxyInfo PROXY = null;
     private static final Proxy AUTH_PROXY = Proxy.NO_PROXY;
-    private static final String USERNAME = "Fontesashley56@gmail.com";
-    private static final String PASSWORD = "tacos4life";
+    private static String USERNAME = "";
+    private static String PASSWORD = "";
+    private static String SERVER = "";
 
     public static void main(String[] args) {
-        if (SPAWN_SERVER) {
-            SessionService sessionService = new SessionService();
-            sessionService.setProxy(AUTH_PROXY);
-
-            Server server = new Server(HOST, PORT, MinecraftProtocol.class, new TcpSessionFactory());
-            server.setGlobalFlag(MinecraftConstants.SESSION_SERVICE_KEY, sessionService);
-            server.setGlobalFlag(MinecraftConstants.VERIFY_USERS_KEY, VERIFY_USERS);
-            server.setGlobalFlag(MinecraftConstants.AUTOMATIC_KEEP_ALIVE_MANAGEMENT, true);
-            server.setGlobalFlag(MinecraftConstants.SERVER_INFO_BUILDER_KEY, new ServerInfoBuilder() {
-                @Override
-                public ServerStatusInfo buildInfo(Session session) {
-                    return new ServerStatusInfo(
-                            new VersionInfo(MinecraftConstants.GAME_VERSION, MinecraftConstants.PROTOCOL_VERSION),
-                            new PlayerInfo(100, 0, new GameProfile[0]),
-                            new TextMessage.Builder().text("Hello World").build(),
-                            null
-                    );
-                }
-            });
-
-            server.setGlobalFlag(MinecraftConstants.SERVER_LOGIN_HANDLER_KEY, new ServerLoginHandler() {
-                @Override
-                public void loggedIn(Session session) {
-                    session.send(new ServerJoinGamePacket(
-                            0,
-                            false,
-                            GameMode.SURVIVAL,
-                            GameMode.SURVIVAL,
-                            1,
-                            new String[]{"minecraft:world"},
-                            getDimensionTag(),
-                            getOverworldTag(),
-                            "minecraft:world",
-                            100,
-                            0,
-                            16,
-                            false,
-                            false,
-                            false,
-                            false
-                    ));
-                }
-            });
-
-            server.setGlobalFlag(MinecraftConstants.SERVER_COMPRESSION_THRESHOLD, 10000);
-            server.addListener(new ServerAdapter() {
-                @Override
-                public void serverClosed(ServerClosedEvent event) {
-                    System.out.println("Server closed.");
-                }
-
-                @Override
-                public void sessionAdded(SessionAddedEvent event) {
-                    event.getSession().addListener(new SessionAdapter() {
-                        @Override
-                        public void packetReceived(PacketReceivedEvent event) {
-                            if (event.getPacket() instanceof ClientChatPacket) {
-                                ClientChatPacket packet = event.getPacket();
-                                GameProfile profile = event.getSession().getFlag(MinecraftConstants.PROFILE_KEY);
-                                System.out.println(profile.getName() + ": " + packet.getMessage());
-                            }
-                        }
-                    });
-                }
-
-                @Override
-                public void sessionRemoved(SessionRemovedEvent event) {
-                    System.out.println("disconnetec hm");
-                    MinecraftProtocol protocol = (MinecraftProtocol) event.getSession().getPacketProtocol();
-                    if (protocol.getSubProtocol() == SubProtocol.GAME) {
-                        System.out.println("Closing server.");
-                        event.getServer().close(false);
-                    }
-                }
-            });
-
-            server.bind();
-        }
-
         //status();
+        McArgsFormatter argsFormatted = null;
+        try {
+             argsFormatted = new McArgsFormatter(args);
+        }catch (ArrayIndexOutOfBoundsException e) {
+            System.out.println("Not enough parameters given!");
+            System.out.println("Exiting console client");
+            return;
+        }
+        if (argsFormatted == null) return;
+
+        USERNAME = argsFormatted.username;
+        PASSWORD = argsFormatted.password;
+        SERVER = argsFormatted.server;
+
+        if (USERNAME.isEmpty() || PASSWORD.isEmpty() || SERVER.isEmpty()) return;
+
         login();
 
-    }
-
-    private static void status() {
-        SessionService sessionService = new SessionService();
-        sessionService.setProxy(AUTH_PROXY);
-
-        MinecraftProtocol protocol = new MinecraftProtocol(SubProtocol.STATUS);
-        Client client = new Client(HOST, PORT, protocol, new TcpSessionFactory(PROXY));
-        client.getSession().setFlag(MinecraftConstants.SESSION_SERVICE_KEY, sessionService);
-        client.getSession().setFlag(MinecraftConstants.SERVER_INFO_HANDLER_KEY, new ServerInfoHandler() {
-            @Override
-            public void handle(Session session, ServerStatusInfo info) {
-                System.out.println("Version: " + info.getVersionInfo().getVersionName() + ", " + info.getVersionInfo().getProtocolVersion());
-                System.out.println("Player Count: " + info.getPlayerInfo().getOnlinePlayers() + " / " + info.getPlayerInfo().getMaxPlayers());
-                System.out.println("Players: " + Arrays.toString(info.getPlayerInfo().getPlayers()));
-                System.out.println("Description: " + info.getDescription());
-                System.out.println("Icon: " + info.getIconPng());
-            }
-        });
-
-        client.getSession().setFlag(MinecraftConstants.SERVER_PING_TIME_HANDLER_KEY, new ServerPingTimeHandler() {
-            @Override
-            public void handle(Session session, long pingTime) {
-                System.out.println("Server ping took " + pingTime + "ms");
-            }
-        });
-
-        client.getSession().connect();
-    }
-
-    public static class CommandListener extends Thread {
-        final Client client;
-
-        CommandListener(Client client) {
-            this.client = client;
-        }
-
-        @Override
-        public void run() {
-            try (Scanner scanner = new Scanner(System.in)) {
-                while (client.getSession().isConnected()) {
-                    if (!scanner.hasNext()) continue;
-                    String input = scanner.nextLine();
-                    client.getSession().send(new ClientChatPacket(input));
-                }
-            }
-        }
     }
 
     private static void login() {
@@ -211,7 +88,7 @@ public class ConsoleClient {
         SessionService sessionService = new SessionService();
         sessionService.setProxy(AUTH_PROXY);
 
-        Client client = new Client(HOST, PORT, protocol, new TcpSessionFactory(PROXY));
+        Client client = new Client(SERVER, PORT, protocol, new TcpSessionFactory(PROXY));
         client.getSession().setFlag(MinecraftConstants.SESSION_SERVICE_KEY, sessionService);
         client.getSession().setFlag(MinecraftConstants.AUTOMATIC_KEEP_ALIVE_MANAGEMENT, true);
 
@@ -219,12 +96,21 @@ public class ConsoleClient {
             @Override
             public void packetReceived(PacketReceivedEvent event) {
                 if (event.getPacket() instanceof ServerJoinGamePacket) {
-
+                    System.out.println("Server successfully joined");
+                    if (!ScriptReader.alreadyExecuted)
+                        tryStartupScript(client);
                 } else if (event.getPacket() instanceof ServerChatPacket) {
                     Message message = event.<ServerChatPacket>getPacket().getMessage();
-                    TextComponent content = Component.text(message.toString());
-                    final String plain = PlainCompo.plain().serialize(textComponent);
-                    System.out.println(json);
+                    final Component component;
+                    try {
+                        component = GsonComponentSerializer.gson().deserialize(message.toString());
+                    } catch (JsonSyntaxException e) {
+                        System.out.println("[ConsoleClient] >> Couldn't output because of unknown JSON object.");
+                        return;
+                    }
+                    final String plain = PlainComponentSerializer.plain().serialize(component);
+                    String s = ChatColor.stripColor(plain);
+                    System.out.println(s);
                 }
             }
 
@@ -239,6 +125,86 @@ public class ConsoleClient {
         client.getSession().connect(true);
         //client.getSession().getPacketProtocol().registerOutgoing(323, ClientChatPacket.class);
         new CommandListener(client).start();
+    }
+
+    private static void tryStartupScript(Client client) {
+        File file = new File("startup.txt");
+        if (!file.exists()) {
+            System.out.println("Didn't find 'startup.txt' creating an empty one");
+            try {
+                file.createNewFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+                return;
+            }
+        }else {
+            System.out.println("Found 'startup.txt', reading and executing now!");
+        }
+
+        try {
+            ScriptReader scriptReader = new ScriptReader("startup.txt", client);
+            scriptReader.execute();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    static class ScriptReader extends FileReader {
+
+        public static boolean alreadyExecuted = false;
+        Client client;
+
+        public ScriptReader(@NotNull String fileName, Client client) throws FileNotFoundException {
+            super(fileName);
+            this.client = client;
+        }
+
+        void execute () {
+            alreadyExecuted = true;
+            Scanner scanner = new Scanner(this);
+            while (scanner.hasNextLine()) {
+                String[] args = scanner.nextLine().split(" ");
+                new SkriptHandler(args).execute();
+            }
+        }
+
+        private class SkriptHandler {
+            String[] args;
+            public SkriptHandler(String[] args) {
+                this.args = args;
+            }
+
+            void execute() throws ArrayIndexOutOfBoundsException {
+                switch (Commands.valueOf(args[0].toUpperCase())) {
+                    case SEND:
+                        StringJoiner stringBuilder = new StringJoiner(" ");
+                        for (int i = 1; i < args.length; i++) {
+                            stringBuilder.add(args[i]);
+                        }
+
+                        String message = stringBuilder.toString();
+                        System.out.println(" >> [Console Cient] Sending: "+ message);
+                        client.getSession().send(new ClientChatPacket(message));
+                        break;
+                    case WAIT:
+                        //TODO:
+                        break;
+                    default:
+                        return;
+                }
+            }
+
+        }
+        private enum Commands {
+            /**
+             * Sends a command to the server
+             */
+            SEND,
+            /**
+             * Waits the given amount of time
+             */
+            WAIT;
+        }
     }
 
     private static CompoundTag getDimensionTag() {
@@ -320,6 +286,46 @@ public class ConsoleClient {
         tag.put(element);
 
         return tag;
+    }
+
+    static class McArgsFormatter {
+        final String[] args;
+
+        public String username = "";
+        public String password = "";
+        public String server = "";
+
+        McArgsFormatter(String[] args) {
+            this.args = args;
+            setup();
+        }
+
+        private void setup() throws ArrayIndexOutOfBoundsException {
+            username = args[0];
+            password = args[1];
+            server = args[2];
+        }
+
+
+    }
+
+    public static class CommandListener extends Thread {
+        final Client client;
+
+        CommandListener(Client client) {
+            this.client = client;
+        }
+
+        @Override
+        public void run() {
+            try (Scanner scanner = new Scanner(System.in)) {
+                while (client.getSession().isConnected()) {
+                    if (!scanner.hasNext()) continue;
+                    String input = scanner.nextLine();
+                    client.getSession().send(new ClientChatPacket(input));
+                }
+            }
+        }
     }
 
 }
