@@ -154,13 +154,11 @@ public class ConsoleClient {
         public static boolean alreadyExecuted = false;
         private static final int TIMEOUT_IN_MILLIS = 60000;
         private Client client;
-        private String fileName;
         private ScriptReader scriptReader;
 
 
         public ScriptCommander(@NotNull String fileName, Client client) throws FileNotFoundException {
             this.client = client;
-            this.fileName = fileName;
             this.scriptReader = new ScriptReader(fileName);
         }
 
