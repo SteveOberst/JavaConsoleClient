@@ -32,7 +32,6 @@ import java.util.*;
 
 public class ConsoleClient {
 
-    private static final boolean SPAWN_SERVER = false;
     private static final boolean VERIFY_USERS = true;
     private static final int PORT = 25565;
     private static final ProxyInfo PROXY = null;
@@ -40,6 +39,7 @@ public class ConsoleClient {
     private static String USERNAME = "";
     private static String PASSWORD = "";
     private static String SERVER = "";
+    private static final boolean IS_READING_MESSAGES = false;
 
     public static void main(String[] args) {
         //status();
@@ -90,7 +90,8 @@ public class ConsoleClient {
 
         Client client = new Client(SERVER, PORT, protocol, new TcpSessionFactory(PROXY));
         client.getSession().setFlag(MinecraftConstants.SESSION_SERVICE_KEY, sessionService);
-        client.getSession().setFlag(MinecraftConstants.AUTOMATIC_KEEP_ALIVE_MANAGEMENT, true);
+        client.getSession().setConnectTimeout(120);
+        client.getSession().setReadTimeout(120);
 
         client.getSession().addListener(new SessionAdapter() {
             @Override
@@ -100,6 +101,7 @@ public class ConsoleClient {
                     if (!ScriptCommander.alreadyExecuted)
                         tryStartupScript(client);
                 } else if (event.getPacket() instanceof ServerChatPacket) {
+                    if (!IS_READING_MESSAGES) return;
                     Message message = event.<ServerChatPacket>getPacket().getMessage();
                     final Component component;
                     try {
@@ -252,87 +254,6 @@ public class ConsoleClient {
              */
             WAIT;
         }
-    }
-
-    private static CompoundTag getDimensionTag() {
-        CompoundTag tag = new CompoundTag("");
-
-        CompoundTag dimensionTypes = new CompoundTag("minecraft:dimension_type");
-        dimensionTypes.put(new StringTag("type", "minecraft:dimension_type"));
-        ListTag dimensionTag = new ListTag("value");
-        CompoundTag overworldTag = convertToValue("minecraft:overworld", 0, getOverworldTag().getValue());
-        dimensionTag.add(overworldTag);
-        dimensionTypes.put(dimensionTag);
-        tag.put(dimensionTypes);
-
-        CompoundTag biomeTypes = new CompoundTag("minecraft:worldgen/biome");
-        biomeTypes.put(new StringTag("type", "minecraft:worldgen/biome"));
-        ListTag biomeTag = new ListTag("value");
-        CompoundTag plainsTag = convertToValue("minecraft:plains", 0, getPlainsTag().getValue());
-        biomeTag.add(plainsTag);
-        biomeTypes.put(biomeTag);
-        tag.put(biomeTypes);
-
-        return tag;
-    }
-
-    private static CompoundTag getOverworldTag() {
-        CompoundTag overworldTag = new CompoundTag("");
-        overworldTag.put(new StringTag("name", "minecraft:overworld"));
-        overworldTag.put(new ByteTag("piglin_safe", (byte) 0));
-        overworldTag.put(new ByteTag("natural", (byte) 1));
-        overworldTag.put(new FloatTag("ambient_light", 0f));
-        overworldTag.put(new StringTag("infiniburn", "minecraft:infiniburn_overworld"));
-        overworldTag.put(new ByteTag("respawn_anchor_works", (byte) 0));
-        overworldTag.put(new ByteTag("has_skylight", (byte) 1));
-        overworldTag.put(new ByteTag("bed_works", (byte) 1));
-        overworldTag.put(new StringTag("effects", "minecraft:overworld"));
-        overworldTag.put(new ByteTag("has_raids", (byte) 1));
-        overworldTag.put(new IntTag("logical_height", 256));
-        overworldTag.put(new FloatTag("coordinate_scale", 1f));
-        overworldTag.put(new ByteTag("ultrawarm", (byte) 0));
-        overworldTag.put(new ByteTag("has_ceiling", (byte) 0));
-        return overworldTag;
-    }
-
-    private static CompoundTag getPlainsTag() {
-        CompoundTag plainsTag = new CompoundTag("");
-        plainsTag.put(new StringTag("name", "minecraft:plains"));
-        plainsTag.put(new StringTag("precipitation", "rain"));
-        plainsTag.put(new FloatTag("depth", 0.125f));
-        plainsTag.put(new FloatTag("temperature", 0.8f));
-        plainsTag.put(new FloatTag("scale", 0.05f));
-        plainsTag.put(new FloatTag("downfall", 0.4f));
-        plainsTag.put(new StringTag("category", "plains"));
-
-        CompoundTag effects = new CompoundTag("effects");
-        effects.put(new LongTag("sky_color", 7907327));
-        effects.put(new LongTag("water_fog_color", 329011));
-        effects.put(new LongTag("fog_color", 12638463));
-        effects.put(new LongTag("water_color", 4159204));
-
-        CompoundTag moodSound = new CompoundTag("mood_sound");
-        moodSound.put(new IntTag("tick_delay", 6000));
-        moodSound.put(new FloatTag("offset", 2.0f));
-        moodSound.put(new StringTag("sound", "minecraft:ambient.cave"));
-        moodSound.put(new IntTag("block_search_extent", 8));
-
-        effects.put(moodSound);
-
-        plainsTag.put(effects);
-
-        return plainsTag;
-    }
-
-    private static CompoundTag convertToValue(String name, int id, Map<String, Tag> values) {
-        CompoundTag tag = new CompoundTag(name);
-        tag.put(new StringTag("name", name));
-        tag.put(new IntTag("id", id));
-        CompoundTag element = new CompoundTag("element");
-        element.setValue(values);
-        tag.put(element);
-
-        return tag;
     }
 
     static class McArgsFormatter {
