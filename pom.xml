@@ -68,6 +68,14 @@
             <version>1.16.2-R0.1-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
+
+        <!-- https://mvnrepository.com/artifact/org.ini4j/ini4j -->
+        <dependency>
+            <groupId>org.ini4j</groupId>
+            <artifactId>ini4j</artifactId>
+            <version>0.5.4</version>
+            <scope>compile</scope>
+        </dependency>
     </dependencies>
 
     <build>
