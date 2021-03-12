@@ -6,9 +6,12 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="JavaConsoleClient" />
         <module name="consoleclient" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="consoleclient (1)" target="8" />
+      <module name="consoleclient (2)" target="8" />
+    </bytecodeTargetLevel>
   </component>
 </project>
