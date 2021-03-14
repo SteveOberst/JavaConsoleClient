@@ -2,6 +2,7 @@ package com.github.ninurtax.consoleclient.modules.impl.reconnect;
 
 import com.github.ninurtax.consoleclient.ConsoleClient;
 import com.github.ninurtax.consoleclient.config.LoadByIni;
+import com.github.ninurtax.consoleclient.log.ClientLogger;
 import com.github.ninurtax.consoleclient.modules.Module;
 
 import java.io.File;
@@ -12,15 +13,15 @@ import java.util.logging.Level;
 
 public class ReconnectModule extends Module {
 
+    private final ConsoleClient consoleClient;
     @LoadByIni
     public String reconnectMessagesFile = "sample-reconnect.txt";
-
+    @LoadByIni
+    public int delayInMS = 5000;
     /**
      * This List contains all messages, the client will reconnect on
      */
-    ArrayList<String> reconnectMessages = new ArrayList<>();
-
-    private final ConsoleClient consoleClient;
+    private ArrayList<String> reconnectMessages = new ArrayList<>();
 
     public ReconnectModule(String name, ConsoleClient consoleClient) {
         super(name);
@@ -42,7 +43,7 @@ public class ReconnectModule extends Module {
         reconnectMessages = new ArrayList<>();
         File file = new File(reconnectMessagesFile);
         if (!file.exists()) {
-            consoleClient.log(Level.WARNING, "Didn't find '"+reconnectMessagesFile+"' creating empty");
+            consoleClient.log(Level.WARNING, "Didn't find '" + reconnectMessagesFile + "' creating empty");
             boolean newFile = file.createNewFile();
         }
 
@@ -54,11 +55,45 @@ public class ReconnectModule extends Module {
 
     public void reconnect(String reason) {
         if (checkReason(reason)) {
-            consoleClient.getMinecraft().login();
+            performReconnect();
+        } else {
+            consoleClient.log(Level.INFO, "Reason is not suited for reconnecting (update '" + reconnectMessagesFile + "' if otherwise)");
+        }
+    }
+
+    private void performReconnect() {
+        new Thread() {
+            @Override
+            public void run() {
+                consoleClient.getLogger().log(ClientLogger.Prefix.SCRIPT, "Reconnecting client");
+                if (delayInMS > 0) {
+                    consoleClient.getLogger().log(ClientLogger.Prefix.SCRIPT, "Waiting "+delayInMS+"ms");
+                    try {
+                        sleep(delayInMS);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+                clearConsole();
+                // Let the startup script perfom again
+                consoleClient.getModuleManager().getStartupScriptModule().setAlreadyExecuted(false);
+                // Connecting
+                consoleClient.getMinecraft().login();
+            }
+        }.start();
+
+    }
+
+    void clearConsole() {
+        //Clearing the console
+        try {
+            ClientLogger.CLS.main();
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
         }
     }
 
     private boolean checkReason(String reconnectModule) {
-        return  (reconnectMessages.contains(reconnectModule.toLowerCase()));
+        return (reconnectMessages.contains(reconnectModule.toLowerCase()));
     }
 }

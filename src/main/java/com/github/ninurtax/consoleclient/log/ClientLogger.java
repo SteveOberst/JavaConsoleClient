@@ -1,5 +1,6 @@
 package com.github.ninurtax.consoleclient.log;
 
+import java.io.IOException;
 import java.util.logging.*;
 
 public class ClientLogger {
@@ -56,6 +57,12 @@ public class ClientLogger {
 
         public String getTail(Handler h) {
             return super.getTail(h);
+        }
+    }
+
+    public static class CLS {
+        public static void main(String... arg) throws IOException, InterruptedException {
+            new ProcessBuilder("cmd", "/c", "cls").inheritIO().start().waitFor();
         }
     }
 }
