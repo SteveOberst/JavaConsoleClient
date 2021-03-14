@@ -53,8 +53,9 @@ public class ReconnectModule extends Module {
     }
 
     public void reconnect(String reason) {
-        if (checkReason(reason));
-            ConsoleClient.main(ConsoleClient.args);
+        if (checkReason(reason)) {
+            consoleClient.getMinecraft().login();
+        }
     }
 
     private boolean checkReason(String reconnectModule) {

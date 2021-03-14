@@ -36,16 +36,12 @@ public class ConsoleClient extends ResourcePlugin {
         this.settingsManager = new SettingsManager(this);
         moduleManager.callStart();
         try {
-            start(args);
+            minecraft = new Minecraft(this, args);
+            minecraft.login();
         } catch (ArrayIndexOutOfBoundsException e) {
             log(Level.SEVERE, "Not enough parameters given");
             System.exit(0);
         }
-    }
-
-    private void start(String[] args) throws ArrayIndexOutOfBoundsException {
-        minecraft = new Minecraft(this, args);
-        minecraft.login();
     }
 
     /**
@@ -69,5 +65,9 @@ public class ConsoleClient extends ResourcePlugin {
 
     public SettingsManager getSettingsManager() {
         return settingsManager;
+    }
+
+    public Minecraft getMinecraft() {
+        return minecraft;
     }
 }
