@@ -11,7 +11,7 @@ import java.util.List;
 public class ModuleManager {
 
     private final ConsoleClient consoleClient;
-    private List<Module> moduleList = new ArrayList<>();
+    private final List<Module> moduleList = new ArrayList<>();
     /*
        Modules
      */
