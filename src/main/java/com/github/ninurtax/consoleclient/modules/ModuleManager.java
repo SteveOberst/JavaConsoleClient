@@ -36,6 +36,7 @@ public class ModuleManager {
          */
         moduleList.add(chatModule);
         moduleList.add(startupScriptModule);
+        moduleList.add(reconnectModule);
     }
 
     /**

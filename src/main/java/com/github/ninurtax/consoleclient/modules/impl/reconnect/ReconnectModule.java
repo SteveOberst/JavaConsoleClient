@@ -20,7 +20,7 @@ public class ReconnectModule extends Module {
      */
     ArrayList<String> reconnectMessages = new ArrayList<>();
 
-    private ConsoleClient consoleClient;
+    private final ConsoleClient consoleClient;
 
     public ReconnectModule(String name, ConsoleClient consoleClient) {
         super(name);
