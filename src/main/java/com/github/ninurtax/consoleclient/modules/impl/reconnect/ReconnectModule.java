@@ -43,12 +43,12 @@ public class ReconnectModule extends Module {
         File file = new File(reconnectMessagesFile);
         if (!file.exists()) {
             consoleClient.log(Level.WARNING, "Didn't find '"+reconnectMessagesFile+"' creating empty");
-            file.createNewFile();
+            boolean newFile = file.createNewFile();
         }
 
         Scanner scanner = new Scanner(file);
         while (scanner.hasNextLine()) {
-            reconnectMessages.add(scanner.nextLine());
+            reconnectMessages.add(scanner.nextLine().toLowerCase());
         }
     }
 
@@ -58,6 +58,6 @@ public class ReconnectModule extends Module {
     }
 
     private boolean checkReason(String reconnectModule) {
-        return  (reconnectMessages.contains(reconnectModule));
+        return  (reconnectMessages.contains(reconnectModule.toLowerCase()));
     }
 }
