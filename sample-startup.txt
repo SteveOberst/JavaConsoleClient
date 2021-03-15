@@ -1,3 +1,0 @@
-send /server F1
-wait 5000ms
-send /home afk
