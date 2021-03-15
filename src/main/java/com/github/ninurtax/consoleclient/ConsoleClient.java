@@ -12,6 +12,7 @@ public class ConsoleClient extends ResourcePlugin {
     public static String[] args;
     /**
      * Program entry point
+     * Will cancel out if not enough parameters given.
      *
      * @param args
      */
