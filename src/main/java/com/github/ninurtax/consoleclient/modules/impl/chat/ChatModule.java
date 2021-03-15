@@ -26,14 +26,7 @@ public class ChatModule extends Module {
     }
 
     private String getPlainMessage(Message message) {
-        final Component component;
-        try {
-            component = GsonComponentSerializer.gson().deserialize(message.toString());
-        } catch (JsonSyntaxException e) {
-            return ("Couldn't output because of unknown JSON object.");
-        }
-        final String plain = PlainComponentSerializer.plain().serialize(component);
-        return ChatColor.stripColor(plain);
+        return ChatColor.stripColor(message.toString());
 
     }
 
