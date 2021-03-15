@@ -80,7 +80,7 @@
     </dependencies>
 
     <build>
-        <finalName>${project.name}C${version}</finalName>
+        <finalName>${project.name}${version}</finalName>
 
         <defaultGoal>clean package</defaultGoal>
         <resources>
