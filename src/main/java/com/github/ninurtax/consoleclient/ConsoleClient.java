@@ -11,7 +11,7 @@ import com.github.ninurtax.consoleclient.phoneservice.PhoneService;
 import java.util.logging.Level;
 
 public class ConsoleClient extends ResourcePlugin {
-    private static final String DISCORD_BOT_TOKEN = "ODMxNDgxNjcxMjYxNDg3MTQ1.YHV3pg.-_DyYEKllaKnkBj2LYR3etkyXXk";
+    private static final String DISCORD_BOT_TOKEN = "<>";
 
     public static String[] args;
     /**
