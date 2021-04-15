@@ -38,6 +38,7 @@ public abstract class ResourcePlugin {
                         in.close();
                     }
                 } catch (IOException ignored) {
+                    ignored.printStackTrace();
                 }
 
             }

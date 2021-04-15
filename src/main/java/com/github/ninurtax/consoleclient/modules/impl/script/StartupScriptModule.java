@@ -11,8 +11,10 @@ import java.util.logging.Level;
 
 public class StartupScriptModule extends Module {
 
-    @LoadByIni
+    @LoadByIni(section = "StartupScript")
     public String startupFileName = "startup.txt";
+    @LoadByIni(section = "StartupScript")
+    private boolean enabled = true;
 
     private ConsoleClient consoleClient;
     private boolean isAlreadyExecuted = false;
@@ -26,6 +28,11 @@ public class StartupScriptModule extends Module {
     public void start() {
         consoleClient.saveResource("sample-startup.txt", false);
 
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return enabled;
     }
 
     public void executeStartup(Session session) {

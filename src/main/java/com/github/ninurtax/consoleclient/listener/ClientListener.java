@@ -4,19 +4,14 @@ import com.github.ninurtax.consoleclient.ConsoleClient;
 import com.github.ninurtax.consoleclient.modules.ModuleManager;
 import com.github.ninurtax.consoleclient.modules.impl.reconnect.ReconnectModule;
 import com.github.ninurtax.consoleclient.modules.impl.script.StartupScriptModule;
-import com.github.steveice10.mc.protocol.data.message.Message;
 import com.github.steveice10.mc.protocol.packet.ingame.server.ServerChatPacket;
 import com.github.steveice10.mc.protocol.packet.ingame.server.ServerJoinGamePacket;
+import com.github.steveice10.mc.protocol.packet.ingame.server.ServerTitlePacket;
+import com.github.steveice10.mc.protocol.packet.ingame.server.world.ServerExplosionPacket;
 import com.github.steveice10.packetlib.Session;
 import com.github.steveice10.packetlib.event.session.DisconnectedEvent;
-import com.github.steveice10.packetlib.event.session.DisconnectingEvent;
 import com.github.steveice10.packetlib.event.session.PacketReceivedEvent;
 import com.github.steveice10.packetlib.event.session.SessionAdapter;
-import com.google.gson.JsonSyntaxException;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.serializer.gson.GsonComponentSerializer;
-import net.kyori.adventure.text.serializer.plain.PlainComponentSerializer;
-import org.bukkit.ChatColor;
 
 public class ClientListener extends SessionAdapter {
 
@@ -25,16 +20,25 @@ public class ClientListener extends SessionAdapter {
 
     public ClientListener(ConsoleClient consoleClient) {
         this.consoleClient = consoleClient;
-        this. moduleManager = consoleClient.getModuleManager();
+        this.moduleManager = consoleClient.getModuleManager();
     }
 
+    //TODO: implement proper management instead of a ton of if statements
     @Override
     public void packetReceived(PacketReceivedEvent event) {
         if (event.getPacket() instanceof ServerJoinGamePacket) {
             onJoin(event.getSession());
         } else if (event.getPacket() instanceof ServerChatPacket) {
-            if (!moduleManager.getChatModule().isEnabled()) return;
+            if (moduleManager.getChatModule().isEnabled()) {
                 moduleManager.getChatModule().onChat(((ServerChatPacket) event.getPacket()).getMessage());
+            }
+            if(moduleManager.getRaidTitleModule().isEnabled()) {
+                moduleManager.getRaidTitleModule().onChatPacketRecieved(event.getPacket());
+            }
+        } else if (event.getPacket() instanceof ServerExplosionPacket) {
+            if(moduleManager.getTntExplodeModule().isEnabled()) {
+                moduleManager.getTntExplodeModule().onExplosionDetected(event.getPacket());
+            }
         }
     }
 

@@ -14,10 +14,12 @@ import java.util.logging.Level;
 public class ReconnectModule extends Module {
 
     private final ConsoleClient consoleClient;
-    @LoadByIni
-    public String reconnectMessagesFile = "sample-reconnect.txt";
-    @LoadByIni
-    public int delayInMS = 5000;
+    @LoadByIni(section = "AutoReconnect")
+    private String reconnectMessagesFile = "sample-reconnect.txt";
+    @LoadByIni(section = "AutoReconnect")
+    private int delayInMS = 5000;
+    @LoadByIni(section = "AutoReconnect")
+    private boolean enabled = true;
     /**
      * This List contains all messages, the client will reconnect on
      */
@@ -35,8 +37,13 @@ public class ReconnectModule extends Module {
             loadMessages();
         } catch (IOException e) {
             e.printStackTrace();
-            this.enabled = false;
+             enabled = false;
         }
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return enabled;
     }
 
     private void loadMessages() throws IOException {
@@ -62,25 +69,22 @@ public class ReconnectModule extends Module {
     }
 
     private void performReconnect() {
-        new Thread() {
-            @Override
-            public void run() {
-                consoleClient.getLogger().log(ClientLogger.Prefix.SCRIPT, "Reconnecting client");
-                if (delayInMS > 0) {
-                    consoleClient.getLogger().log(ClientLogger.Prefix.SCRIPT, "Waiting "+delayInMS+"ms");
-                    try {
-                        sleep(delayInMS);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
+        new Thread(() -> {
+            consoleClient.getLogger().log(ClientLogger.Prefix.SCRIPT, "Reconnecting client");
+            if (delayInMS > 0) {
+                consoleClient.getLogger().log(ClientLogger.Prefix.SCRIPT, "Waiting "+delayInMS+"ms");
+                try {
+                    Thread.sleep(delayInMS);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
                 }
-                clearConsole();
-                // Let the startup script perfom again
-                consoleClient.getModuleManager().getStartupScriptModule().setAlreadyExecuted(false);
-                // Connecting
-                consoleClient.getMinecraft().login();
             }
-        }.start();
+            clearConsole();
+            // Let the startup script perfom again
+            consoleClient.getModuleManager().getStartupScriptModule().setAlreadyExecuted(false);
+            // Connecting
+            consoleClient.getMinecraft().login();
+        }).start();
 
     }
 

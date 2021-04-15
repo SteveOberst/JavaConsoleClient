@@ -7,6 +7,7 @@ import com.github.steveice10.mc.auth.exception.request.RequestException;
 import com.github.steveice10.mc.protocol.MinecraftProtocol;
 import com.github.steveice10.packetlib.Client;
 import com.github.steveice10.packetlib.tcp.TcpSessionFactory;
+import lombok.Getter;
 
 public class Minecraft {
 
@@ -16,7 +17,7 @@ public class Minecraft {
     private final String username;
     private final String password;
     private final String server;
-    private int port = 25565;
+    private int port;
 
     private Client client;
 
@@ -29,10 +30,11 @@ public class Minecraft {
         this.username = credentialsBuilder.username;
         this.password = credentialsBuilder.password;
         this.server = credentialsBuilder.server;
+        this.port = credentialsBuilder.port;
     }
 
     public void login() {
-        MinecraftProtocol protocol = null;
+        MinecraftProtocol protocol;
         try {
             protocol = new MinecraftProtocol(username, password);
             consoleClient.log("Successfully authenticated user.");
@@ -57,9 +59,10 @@ public class Minecraft {
     static class CredentialsBuilder {
         final String[] args;
 
-        public String username = "";
-        public String password = "";
-        public String server = "";
+        private String username = "";
+        private String password = "";
+        private String server = "";
+        private int port = 25565;
 
         CredentialsBuilder(String[] args) {
             this.args = args;
@@ -70,9 +73,11 @@ public class Minecraft {
             username = args[0];
             password = args[1];
             server = args[2];
+            if(server.contains(":")) {
+                String[] split = server.split(":");
+                server = split[0];
+                port = Integer.parseInt(split[1]);
+            }
         }
-
-
     }
-
 }
