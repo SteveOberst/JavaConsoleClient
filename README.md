@@ -1,5 +1,5 @@
 # JavaConsoleClient
-Simple Chat connection Client for Minecraft
+Simple Chat connection Client supporting raid alerts for Minecraft factions
 
 # Usage
 
